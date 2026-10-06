@@ -20,3 +20,19 @@ Istill dont know how it works in detailed manner. i am unable to understand how 
 **Next session starts with:**
 
 
+week 2:
+## What i learned
+I learned how server connection works. We mainly have two protocols TCP and UDP. These protocols have different way of connection. TCP is more reliable and makes sure that the message reaches the other server, while UDP does not gurantee that the message will reach the other server but is faster than TCP. I also leraned how connection is established for TCP using strace. Also lerned about what DNS time, TCP connect time, TLS handshake, TTFB (server think time), Body download
+
+*(fix: "secure" → "reliable" - TCP guarantees delivery/ordering, it doesn't encrypt anything on its own; that's TLS's job, a separate layer on top. Also fixed the TCP/UDP swap in the second clause - it's UDP that doesn't guarantee delivery.)*
+
+## What surprised me
+lerning about how connection is actually established and seeing how after a connection a thread is created for said connection and how server goes back to listening for other connections.
+
+## What I still can't explain
+not sure about the TTFB and Body download time. Not sure about 4 in log "1    recvfrom(4, "how cool", 1024, 0, NULL, NULL) = 8"
+
+answer by llm:
+- **TTFB (time to first byte)**: once DNS, TCP, and TLS are all done, your request has finally been sent. TTFB measures the gap between "request fully sent" and "first byte of the response arrives" - it's effectively how long the server's own code took to receive your request, do whatever work it needed to do (query a DB, run logic, etc.), and start writing a response back. A slow TTFB usually means a slow *server*, not a slow *network*.
+- **Body download time**: after that first byte, the rest of the response still has to arrive - `total - ttfb` is how long it took to transfer the rest of the body over the already-open, already-encrypted connection. A large response or a slow/throttled connection shows up here, not in TTFB.
+- **The `4` in `recvfrom(4, ...)`**: it's the file descriptor for this one client's connection - the number `accept()` handed back when this client connected (see `SYSCALLS.md`'s annotation on line 7 for where it's created). It's not a count or a size; it's the "claim-check" number the kernel uses internally to know which connection you're asking about. Every `recvfrom`/`sendto` call for this same client uses the same `4` because it's the same connection the whole time.
