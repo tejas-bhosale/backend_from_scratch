@@ -104,10 +104,15 @@
 
 
 
-Phase	google.com	api.github.com	httpbin.org
-DNS	100.4 ms	164.9 ms	84.0 ms
-TCP connect	17.0 ms	32.3 ms	304.6 ms
-TLS handshake	139.7 ms	45.5 ms	589.8 ms
-TTFB (server think time)	88.7 ms	39.6 ms	260.7 ms
-Body download	37.7 ms	0.3 ms	0.5 ms
-Total	383.4 ms	282.6 ms	1239.6 ms
+## curl timing breakdown
+
+| Phase | google.com | api.github.com | httpbin.org |
+|---|--:|--:|--:|
+| DNS | 100.4 ms | 164.9 ms | 84.0 ms |
+| TCP connect | 17.0 ms | 32.3 ms | 304.6 ms |
+| TLS handshake | 139.7 ms | 45.5 ms | 589.8 ms |
+| TTFB (server think time) | 88.7 ms | 39.6 ms | 260.7 ms |
+| Body download | 37.7 ms | 0.3 ms | 0.5 ms |
+| **Total** | **383.4 ms** | **282.6 ms** | **1239.6 ms** |
+
+httpbin's bottleneck is TCP connect + TLS combined (~72% of total), not DNS - its `-v --trace-time` output showed `TLSv1.2`, which needs two full network round-trips to complete a handshake (vs. one for TLS 1.3), so each round-trip's physical distance cost gets paid twice.
